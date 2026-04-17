@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>වෙසක් කුඩුව AR - Three.js</title>
+    <title>Vesak Kuduwa AR - Mobile Optimized</title>
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -10,9 +10,9 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 
-<body style="margin: 0; overflow: hidden;">
+<body style="margin: 0; overflow: hidden; background-color: #000;">
+
     <script>
-        // 1. මූලික විචල්‍යයන් (Global Variables)
         let scene, camera, renderer, clock, arToolkitSource, arToolkitContext;
         let kuduwaModel;
 
@@ -20,26 +20,23 @@
         animate();
 
         function init() {
-            // --- Scene එක සැකසීම ---
+            // 1. Scene සැකසීම
             scene = new THREE.Scene();
 
-            // ආලෝකය ලබාදීම (කුඩුව පැහැදිලිව පෙනෙන්න)
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            // එළිය ලබාදීම (කුඩුව පැහැදිලිව පෙනීමට)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
             scene.add(ambientLight);
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(1, 2, 1);
-            scene.add(directionalLight);
-
-            // --- කැමරාව සැකසීම ---
+            // 2. කැමරාව
             camera = new THREE.Camera();
             scene.add(camera);
 
-            // --- Renderer සැකසීම ---
+            // 3. Renderer සැකසීම
             renderer = new THREE.WebGLRenderer({
                 antialias: true,
                 alpha: true
             });
+            renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.domElement.style.position = 'absolute';
             renderer.domElement.style.top = '0px';
@@ -48,20 +45,26 @@
 
             clock = new THREE.Clock();
 
-            // --- AR.js Toolkit Source (කැමරාව) ---
+            // 4. AR.js කැමරා සැකසුම් (Mobile සඳහා විශේෂිතව)
             arToolkitSource = new THREEx.ArToolkitSource({
                 sourceType: 'webcam',
+                // පෝන් එකේ පසුපස කැමරාව භාවිත කිරීමට බල කිරීම
+                sourceParameters: {
+                    videoConstraints: {
+                        facingMode: 'environment'
+                    }
+                }
             });
 
             arToolkitSource.init(function onReady() {
-                onResize();
+                setTimeout(() => {
+                    onResize();
+                }, 1000);
             });
 
-            window.addEventListener('resize', function() {
-                onResize();
-            });
+            window.addEventListener('resize', onResize);
 
-            // --- AR.js Toolkit Context (Marker හඳුනාගැනීම) ---
+            // 5. Marker හඳුනාගැනීම
             arToolkitContext = new THREEx.ArToolkitContext({
                 cameraParametersUrl: 'https://raw.githack.com/AR-js-org/AR.js/master/data/data/camera_para.dat',
                 detectionMode: 'mono',
@@ -71,35 +74,30 @@
                 camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
             });
 
-            // --- Marker එක සහ Group එක සැකසීම ---
-            // මෙහිදී අපි 'Hiro' මාකර් එක භාවිතා කරන ලෙස පවසනවා
+            // 6. Hiro Marker එකට අදාළ Group එක
             let markerRoot = new THREE.Group();
             scene.add(markerRoot);
             
-            let markerControls = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+            new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
                 type: 'pattern',
                 patternUrl: 'https://raw.githack.com/AR-js-org/AR.js/master/data/data/patt.hiro',
             });
 
-            // --- 3D වෙසක් කුඩුව Load කිරීම ---
+            // 7. 3D වෙසක් කුඩුව (.glb file එක) Load කිරීම
             const loader = new THREE.GLTFLoader();
             
-            // ඔබේ .glb file එකේ නම මෙතනට ලබා දෙන්න
+            // ඔබේ මොඩලයේ නම නිවැරදිව මෙතැනට ලබා දෙන්න
             loader.load('vesak_kuduwa.glb', function(gltf) {
                 kuduwaModel = gltf.scene;
                 
-                // කුඩුවේ ප්‍රමාණය හරිගස්සන්න (අවශ්‍ය නම් වෙනස් කරන්න)
+                // කුඩුවේ ප්‍රමාණය (අවශ්‍ය පරිදි වෙනස් කරන්න)
                 kuduwaModel.scale.set(0.5, 0.5, 0.5); 
                 kuduwaModel.position.set(0, 0, 0);
                 
                 markerRoot.add(kuduwaModel);
-                console.log("කුඩුව සාර්ථකව ඇතුළත් කළා!");
-            }, undefined, function(error) {
-                console.error("Model එක Load කිරීමේ දෝෂයක්:", error);
             });
         }
 
-        // Window එක Resize වන විට AR එක හරියට තබා ගැනීමට
         function onResize() {
             arToolkitSource.onResizeElement();
             arToolkitSource.copyElementSizeTo(renderer.domElement);
@@ -108,20 +106,15 @@
             }
         }
 
-        // --- Animation Loop (සෑම තත්පරයකම ක්‍රියාත්මක වේ) ---
         function animate() {
             requestAnimationFrame(animate);
 
             if (arToolkitSource.ready === false) return;
-
             arToolkitContext.update(arToolkitSource.domElement);
 
-            // කුඩුව කැරකැවීම පාලනය කරන තැන
+            // කුඩුව කරකැවීමේ කේතය (Animation)
             if (kuduwaModel) {
-                // Y අක්ෂය වටා කැරකැවීම (0.5 යනු වේගයයි)
-                kuduwaModel.rotation.y += 0.01; 
-                
-                // ඔබට මෙතනින් වෙනත් කොටස් පාලනය කිරීමේ codes පසුව එකතු කළ හැක
+                kuduwaModel.rotation.y += 0.015; // වේගය පාලනය
             }
 
             renderer.render(scene, camera);
