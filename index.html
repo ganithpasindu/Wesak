@@ -1,44 +1,116 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Vesak Kuduwa AR</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <meta charset="utf-8">
+    <title>Vesak Kuduwa AR Pro</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/three.js/build/ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <style>
+        /* මොඩලය ලෝඩ් වන තෙක් පෙන්වන Screen එක */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: white; display: flex;
+            align-items: center; justify-content: center; z-index: 999;
+            font-family: sans-serif; font-size: 20px;
+        }
+    </style>
 </head>
 
 <body style="margin: 0; overflow: hidden;">
-    
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-        
-        <a-assets>
-            <a-asset-item id="kuduwa-file" src="vesak_kuduwa.glb"></a-asset-item>
-        </a-assets>
-
-        <a-marker preset="hiro">
-            
-            <a-entity 
-                gltf-model="#kuduwa-file" 
-                scale="0.5 0.5 0.5" 
-                position="0 0.5 0"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear">
-            </a-entity>
-
-        </a-marker>
-
-        <a-entity camera></a-entity>
-        
-    </a-scene>
+    <div id="loader">වෙසක් කුඩුව සූදානම් කරමින්...</div>
 
     <script>
-        // මොඩලය ලෝඩ් වුණාද කියා පරීක්ෂා කිරීමට සරල ක්‍රමයක්
-        document.querySelector('#kuduwa-file').addEventListener('loaded', function () {
-            alert("වෙසක් කුඩුව සූදානම්! දැන් Hiro Marker එකට අල්ලන්න.");
-        });
+        let scene, camera, renderer, arToolkitSource, arToolkitContext, markerRoot, kuduwa;
 
-        document.querySelector('#kuduwa-file').addEventListener('error', function () {
-            alert("Error: .glb file එක සොයාගත නොහැක. File name එක පරීක්ෂා කරන්න.");
-        });
+        init();
+        animate();
+
+        function init() {
+            // 1. Scene & Lighting
+            scene = new THREE.Scene();
+            
+            // පරිසර ආලෝකය (Ambient Light)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+            scene.add(ambientLight);
+
+            // දිශානුගත ආලෝකය (Directional Light) - කුඩුවේ හැඩතල මතු කිරීමට
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.set(1, 2, 3);
+            scene.add(dirLight);
+
+            // 2. Camera & Renderer
+            camera = new THREE.Camera();
+            scene.add(camera);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.domElement.style.position = 'absolute';
+            document.body.appendChild(renderer.domElement);
+
+            // 3. AR Toolkit Source
+            arToolkitSource = new THREEx.ArToolkitSource({ sourceType: 'webcam' });
+            arToolkitSource.init(() => { onResize(); });
+            window.addEventListener('resize', onResize);
+
+            // 4. AR Toolkit Context
+            arToolkitContext = new THREEx.ArToolkitContext({
+                cameraParametersUrl: 'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/data/data/camera_para.dat',
+                detectionMode: 'mono'
+            });
+            arToolkitContext.init(() => {
+                camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+            });
+
+            // 5. Marker Setup (Hiro)
+            markerRoot = new THREE.Group();
+            scene.add(markerRoot);
+            new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+                type: 'pattern', patternUrl: 'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/data/data/patt.hiro'
+            });
+
+            // 6. GLTF Model Loader
+            const loader = new THREE.GLTFLoader();
+            loader.load('vesak_kuduwa.glb', (gltf) => {
+                kuduwa = gltf.scene;
+                
+                // කුඩුවේ ප්‍රමාණය සහ පිහිටීම (Adjust as needed)
+                kuduwa.scale.set(0.6, 0.6, 0.6);
+                kuduwa.position.set(0, 0, 0);
+                
+                markerRoot.add(kuduwa);
+                
+                // Loader එක ඉවත් කිරීම
+                document.getElementById('loader').style.display = 'none';
+            }, undefined, (error) => {
+                console.error(error);
+                document.getElementById('loader').innerText = "Error: මොඩලය සොයාගත නොහැක!";
+            });
+        }
+
+        function onResize() {
+            arToolkitSource.onResizeElement();
+            arToolkitSource.copyElementSizeTo(renderer.domElement);
+            if (arToolkitContext.arController !== null) {
+                arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (arToolkitSource.ready) {
+                arToolkitContext.update(arToolkitSource.domElement);
+            }
+            // කුඩුව කැරකැවීම
+            if (kuduwa) {
+                kuduwa.rotation.y += 0.015;
+            }
+            renderer.render(scene, camera);
+        }
     </script>
-
 </body>
 </html>
