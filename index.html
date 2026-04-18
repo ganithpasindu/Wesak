@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="si">
 <head>
-    <title>Vesak Kuduwa AR</title>
+    <meta charset="UTF-8">
+    <title>Vesak Kuduwa AR - Hiro Marker</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
@@ -18,9 +19,8 @@
             
             <a-entity 
                 gltf-model="#kuduwa-file" 
-                scale="0.5 0.5 0.5" 
-                position="0 0.5 0"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear">
+                scale="2 2 2" 
+                position="0 0.5 0">
             </a-entity>
 
         </a-marker>
@@ -30,13 +30,15 @@
     </a-scene>
 
     <script>
-        // මොඩලය ලෝඩ් වුණාද කියා පරීක්ෂා කිරීමට සරල ක්‍රමයක්
-        document.querySelector('#kuduwa-file').addEventListener('loaded', function () {
-            alert("වෙසක් කුඩුව සූදානම්! දැන් Hiro Marker එකට අල්ලන්න.");
+        // මොඩලය ලෝඩ් වුණාද කියා පරීක්ෂා කිරීමට
+        const model = document.querySelector('#kuduwa-file');
+        
+        model.addEventListener('loaded', function () {
+            console.log("වෙසක් කුඩුව සාර්ථකව ලෝඩ් වුණා!");
         });
 
-        document.querySelector('#kuduwa-file').addEventListener('error', function () {
-            alert("Error: .glb file එක සොයාගත නොහැක. File name එක පරීක්ෂා කරන්න.");
+        model.addEventListener('error', function () {
+            alert("දෝෂයකි: 'vesak_kuduwa.glb' ෆයිල් එක හමු නොවීය. File name එක නිවැරදිදැයි බලන්න.");
         });
     </script>
 
