@@ -1,58 +1,44 @@
 <!DOCTYPE html>
-<html lang="si">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vesak Kuduwa AR 2026</title>
-
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-
-    <style>
-        body { margin: 0; background-color: #1a1a1a; font-family: sans-serif; }
-        
-        /* Model Viewer එක පෝන් එකේ screen එක පුරාම පෙන්වීමට */
-        model-viewer {
-            width: 100%;
-            height: 100vh;
-            background-color: #000;
-        }
-
-        /* AR බොත්තම ලස්සන කරන්න */
-        #ar-button {
-            background-color: #ff9800;
-            border-radius: 30px;
-            border: none;
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-    </style>
+    <title>Vesak Kuduwa AR</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
-<body>
 
-    <model-viewer 
-        src="vesak_kuduwa.glb" 
-        ar 
-        ar-modes="webxr scene-viewer quick-look" 
-        camera-controls 
-        auto-rotate 
-        shadow-intensity="2" 
-        exposure="1" 
-        environment-image="neutral"
-        autoplay>
+<body style="margin: 0; overflow: hidden;">
+    
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
         
-        <button slot="ar-button" id="ar-button">
-            View in AR (වෙසක් කුඩුව බලන්න)
-        </button>
+        <a-assets>
+            <a-asset-item id="kuduwa-file" src="vesak_kuduwa.glb"></a-asset-item>
+        </a-assets>
 
-    </model-viewer>
+        <a-marker preset="hiro">
+            
+            <a-entity 
+                gltf-model="#kuduwa-file" 
+                scale="0.5 0.5 0.5" 
+                position="0 0.5 0"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear">
+            </a-entity>
+
+        </a-marker>
+
+        <a-entity camera></a-entity>
+        
+    </a-scene>
+
+    <script>
+        // මොඩලය ලෝඩ් වුණාද කියා පරීක්ෂා කිරීමට සරල ක්‍රමයක්
+        document.querySelector('#kuduwa-file').addEventListener('loaded', function () {
+            alert("වෙසක් කුඩුව සූදානම්! දැන් Hiro Marker එකට අල්ලන්න.");
+        });
+
+        document.querySelector('#kuduwa-file').addEventListener('error', function () {
+            alert("Error: .glb file එක සොයාගත නොහැක. File name එක පරීක්ෂා කරන්න.");
+        });
+    </script>
 
 </body>
 </html>
